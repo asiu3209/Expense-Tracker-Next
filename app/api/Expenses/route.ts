@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+//Current Storage of expense information, database will be implemented
 let expenses = [
   {
     id: "1",
@@ -17,12 +18,15 @@ let expenses = [
   },
 ];
 
+//Returns the expenses array to whoever asked for it in JSON form
 export async function GET() {
   return NextResponse.json(expenses);
 }
 
+//Adds a new expense into the array, returns error codes when problems occur
 export async function POST(request: Request) {
   try {
+    //Obtains information, such as expense info, from called function
     const body = await request.json();
     // Validate required fields
     if (!body.description || !body.amount || !body.category || !body.date) {
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
+    //New expense created using form data
     const newExpense = {
       id: Date.now().toString(),
       description: body.description,
@@ -41,16 +45,17 @@ export async function POST(request: Request) {
     };
 
     expenses.push(newExpense);
-
+    //Returns success code
     return NextResponse.json(newExpense, { status: 201 });
   } catch (error) {
+    //Handles errors
     return NextResponse.json(
       { error: "Invalid request body" },
       { status: 400 }
     );
   }
 }
-
+//Deletes a provided expense from storage based off of an expense ID given
 export async function DELETE(request: Request) {
   try {
     const { id } = await request.json();
