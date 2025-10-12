@@ -29,7 +29,9 @@ interface ExpenseFormProps {
 }
 
 function ExpenseForm() {
+  //Router that will help with changing which page is user on
   const router = useRouter();
+
   // Form state using controlled components pattern
   const [formData, setFormData] = useState<ExpenseFormData>({
     description: "",
@@ -59,6 +61,7 @@ function ExpenseForm() {
     return validationErrors;
   }
 
+  //Calls API route and function POST to add a new expense into the data
   async function processData() {
     const amount = parseFloat(formData.amount);
     await fetch("/api/Expenses", {
