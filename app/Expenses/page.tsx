@@ -54,7 +54,7 @@ function App() {
 
     fetchExpenses();
   }
-
+  //Obtains the sum of all expenses to be displayed inside expense summary
   const totalAmount = expenses.reduce(
     (sum: number, expense: Expense) => sum + expense.amount,
     0
@@ -69,7 +69,6 @@ function App() {
             expenseCount={expenses.length}
             period="This Month"
           />
-          {/* <ExpenseForm onSubmit={handleAddExpense} /> */}
           <ExpenseList
             expenses={expenses}
             deleteExpense={handleDeleteExpense}
