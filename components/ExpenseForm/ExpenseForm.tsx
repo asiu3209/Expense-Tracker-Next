@@ -111,7 +111,7 @@ function ExpenseForm() {
 
   return (
     <form
-      className="bg-white rounded-lg p-6 mb-8 shadow-sm border border-gray-200"
+      className="bg-white rounded-lg p-6 mt-8 mb-8 shadow-sm border border-gray-200 w-full max-w-[60%] mx-auto"
       onSubmit={handleSubmit}
     >
       <h3 className="text-lg font-semibold text-gray-900 mb-5">
@@ -135,17 +135,17 @@ function ExpenseForm() {
           }
           placeholder="What did you spend money on?"
           className={`
-            w-full px-3 py-2.5 
-            border rounded-md
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            placeholder-gray-400 text-sm bg-white
-            transition-colors duration-200
-            ${
-              errors.description
-                ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300"
-            }
-          `}
+        w-full px-3 py-2.5 
+        border rounded-md
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+        placeholder-gray-400 text-sm bg-white
+        transition-colors duration-200
+        ${
+          errors.description
+            ? "border-red-300 focus:ring-red-500"
+            : "border-gray-300"
+        }
+        `}
         />
         {errors.description && (
           <span className="text-red-500 text-xs mt-1 block">
@@ -174,17 +174,17 @@ function ExpenseForm() {
             step="0.01"
             min="0"
             className={`
-              w-full px-3 py-2.5 
-              border rounded-md
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              placeholder-gray-400 text-sm bg-white
-              transition-colors duration-200
-              ${
-                errors.amount
-                  ? "border-red-300 focus:ring-red-500"
-                  : "border-gray-300"
-              }
-            `}
+          w-full px-3 py-2.5 
+          border rounded-md
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          placeholder-gray-400 text-sm bg-white
+          transition-colors duration-200
+          ${
+            errors.amount
+              ? "border-red-300 focus:ring-red-500"
+              : "border-gray-300"
+          }
+        `}
           />
           {errors.amount && (
             <span className="text-red-500 text-xs mt-1 block">
@@ -211,17 +211,17 @@ function ExpenseForm() {
               })
             }
             className={`
-              w-full px-3 py-2.5 
-              border rounded-md
-              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-              text-sm bg-white cursor-pointer
-              transition-colors duration-200
-              ${
-                errors.category
-                  ? "border-red-300 focus:ring-red-500"
-                  : "border-gray-300"
-              }
-            `}
+          w-full px-3 py-2.5 
+          border rounded-md
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+          text-sm bg-white cursor-pointer
+          transition-colors duration-200
+          ${
+            errors.category
+              ? "border-red-300 focus:ring-red-500"
+              : "border-gray-300"
+          }
+        `}
           >
             <option value="Food">Food</option>
             <option value="Transportation">Transportation</option>
@@ -251,17 +251,13 @@ function ExpenseForm() {
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
           className={`
-            w-full px-3 py-2.5 
-            border rounded-md
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-            text-sm bg-white
-            transition-colors duration-200
-            ${
-              errors.date
-                ? "border-red-300 focus:ring-red-500"
-                : "border-gray-300"
-            }
-          `}
+        w-full px-3 py-2.5 
+        border rounded-md
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+        text-sm bg-white
+        transition-colors duration-200
+        ${errors.date ? "border-red-300 focus:ring-red-500" : "border-gray-300"}
+        `}
         />
         {errors.date && (
           <span className="text-red-500 text-xs mt-1 block">{errors.date}</span>
@@ -271,12 +267,12 @@ function ExpenseForm() {
       <button
         type="submit"
         className="
-          w-full bg-blue-500 hover:bg-blue-600 
-          text-white font-medium py-3 px-4 
-          rounded-md transition-colors duration-200
-          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-          disabled:opacity-50 disabled:cursor-not-allowed
-        "
+        w-full bg-blue-500 hover:bg-blue-600 
+        text-white font-medium py-3 px-4 
+        rounded-md transition-colors duration-200
+        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        disabled:opacity-50 disabled:cursor-not-allowed
+      "
       >
         Add Expense
       </button>
