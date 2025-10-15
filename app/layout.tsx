@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <nav className="bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg">
-          <div className="max-w-4xl mx-auto px-8 py-4 flex items-center justify-between">
+          <div className=" mx-auto px-8 py-4 flex items-center justify-between">
             <Link
               href="/"
               className="text-2xl font-bold hover:opacity-80 transition"
@@ -24,11 +24,14 @@ export default function RootLayout({
               Expense Tracker
             </Link>
             <div className="flex gap-4">
-              <Link href="/" className="hover:underline">
+              <Link href="/" className="text-xl hover:underline">
                 Home
               </Link>
-              <Link href="/Expenses" className="hover:underline">
+              <Link href="/Expenses" className="text-xl hover:underline">
                 Expenses
+              </Link>
+              <Link href="/" className="text-xl hover:underline">
+                Login
               </Link>
             </div>
           </div>
