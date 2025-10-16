@@ -38,6 +38,7 @@
 - [ ] CI/CD pipeline
 - [ ] Production deployment
 - [ ] Final presentation preparation
+- [ ] Media Queries for mobile responsiveness
 
 ## Success Criteria
 
