@@ -23,4 +23,30 @@ Full-stack expense tracking application built with Next.js 14, featuring server-
 - Built API endpoints for CRUD operations
 - Improved performance with SSR
 
-[Include installation and setup instructions...]
+## Prerequisites
+- Node.js 18.17.0 or higher
+- npm 9.6.7 or higher
+- Git configured with your credentials
+- GitHub account with Copilot access
+
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/[yourusername]/expense-tracker
+   cd expense-tracker
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up environment variables:
+   ```bash
+   cd .env.example .env.local
+   # Add your confuguration values
+   ```
+4. Start development server:
+   ```bash
+   npm run dev
+   ```
+## Contributing
+Please read our Contributing Guidelines and Code of Conduct before submitting PRs.
