@@ -13,13 +13,13 @@
 - [x] Expense CRUD operations
 - [x] Category management system
 - [x] Form validation and error handling
-- [ ] Local storage for data persistence
+- [IP] Local storage for data persistence
 - [x] Basic analytics dashboard
 
 ## Phase 3: Full-Stack Integration (Weeks 7-9)
 
 - [x] Next.js API routes setup
-- [ ] PostgreSQL database integration
+- [IP] PostgreSQL database integration
 - [ ] User authentication system
 - [ ] AWS Lambda functions
 - [ ] Data migration from local storage

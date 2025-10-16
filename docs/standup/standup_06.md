@@ -9,8 +9,8 @@
 
 ## What I'm Working On
 
-- [ ] Local storage for data persistence
-- [ ] Database implementation using PostgreSQL
+- [IP] Local storage for data persistence
+- [IP] Database implementation using PostgreSQL
 
 ## Blockers
 
