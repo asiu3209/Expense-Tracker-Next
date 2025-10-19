@@ -181,6 +181,7 @@ function ExpenseForm() {
     setErrors({});
 
     router.push("/Expenses");
+    router.refresh();
   }
 
   return (
@@ -367,41 +368,51 @@ function ExpenseForm() {
           >
             <span className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-100">
               <svg
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-5 h-5 text-gray-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-          aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-5 h-5 text-gray-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden="true"
               >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16v-4a4 4 0 018 0v4m-5-4v6m0 0h4" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M7 16v-4a4 4 0 018 0v4m-5-4v6m0 0h4"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M20 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6"
+                />
               </svg>
             </span>
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700 truncate">
-            {receipt ? receipt.name : "Click to upload a receipt"}
-          </span>
-          {receipt && (
-            <span className="text-xs text-gray-500 ml-2">
-              {(receipt.size / 1024).toFixed(0)} KB
-            </span>
-          )}
+                <span className="text-sm font-medium text-gray-700 truncate">
+                  {receipt ? receipt.name : "Click to upload a receipt"}
+                </span>
+                {receipt && (
+                  <span className="text-xs text-gray-500 ml-2">
+                    {(receipt.size / 1024).toFixed(0)} KB
+                  </span>
+                )}
               </div>
               {!receipt && (
-          <p className="text-xs text-gray-500 mt-0.5">
-            PNG, JPG, GIF up to 5MB
-          </p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  PNG, JPG, GIF up to 5MB
+                </p>
               )}
             </div>
 
             <span
               aria-hidden
               className={`ml-3 inline-flex items-center px-3 py-1 rounded-md text-xs font-medium ${
-          uploading ? "bg-gray-200 text-gray-500" : "bg-blue-500 text-white hover:bg-blue-600"
+                uploading
+                  ? "bg-gray-200 text-gray-500"
+                  : "bg-blue-500 text-white hover:bg-blue-600"
               }`}
             >
               Browse
