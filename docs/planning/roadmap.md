@@ -23,6 +23,7 @@
 - [ ] User authentication system
 - [ ] AWS Lambda functions
 - [ ] Data migration from local storage
+- [x] Add a receipt uploading feature for each expense
 
 ## Phase 4: Advanced Features (Weeks 10-12)
 
