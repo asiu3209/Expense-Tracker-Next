@@ -18,6 +18,7 @@ interface Expense {
   createdAt?: string; //optional meta data
   updatedAt?: string; //tracking
   tags?: string[]; //future implementation
+  receiptUrl?: string;
 }
 
 function App() {

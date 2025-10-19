@@ -17,6 +17,7 @@ interface FormErrors {
   amount?: string;
   category?: string;
   date?: string;
+  receipt?: string;
 }
 
 interface ExpenseFormProps {
@@ -25,6 +26,7 @@ interface ExpenseFormProps {
     amount: number;
     category: ExpenseCategory;
     date: string;
+    receiptUrl?: string;
   }) => void;
 }
 
@@ -40,6 +42,9 @@ function ExpenseForm() {
     date: new Date().toISOString().split("T")[0],
   });
 
+  //Stores receipt info until submitted as a file
+  const [receipt, setReceipt] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   // Track validation errors
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -63,24 +68,98 @@ function ExpenseForm() {
 
   //Calls API route and function POST to add a new expense into the data
   async function processData() {
+    setUploading(true); // Disable button, show "Uploading..." text
     const amount = parseFloat(formData.amount);
-    await fetch("/api/Expenses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        description: formData.description.trim(),
-        amount,
-        category: formData.category,
-        date: formData.date,
-      }),
-    });
+    try {
+      let receiptUrl: string | undefined;
+      if (receipt) {
+        const receiptFormData = new FormData();
+        receiptFormData.append("receipt", receipt);
+        const uploadResponse = await fetch("/api/uploadReceipt", {
+          method: "POST",
+          body: receiptFormData,
+        });
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json();
+          throw new Error(errorData.error || "Failed to upload receipt");
+        }
+
+        const uploadData = await uploadResponse.json();
+        receiptUrl = uploadData.url;
+      }
+
+      await fetch("/api/Expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: formData.description.trim(),
+          amount,
+          category: formData.category,
+          date: formData.date,
+          receiptUrl: receiptUrl,
+        }),
+      });
+    } catch (error) {
+      console.error("Submission error: ", error);
+    } finally {
+      // Ensures button re-enables so user can try again
+      setUploading(false);
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  /**
+   * Handles receipt file selection from file input
+   * Validates file type and size before storing in state
+   */
+  function handleReceiptChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // Check if user selected a file
+    // e.target.files is FileList (array-like) or null
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+
+      // VALIDATION 1: Check file type
+      // file.type is MIME type: 'image/jpeg', 'image/png', etc.
+      // .startsWith('image/') accepts any image type
+      // Rejects: 'application/pdf', 'text/plain', 'video/mp4', etc.
+      if (!file.type.startsWith("image/")) {
+        // Set error message for user
+        setErrors((prev) => ({
+          ...prev,
+          receipt: "Please select an image file (JPG, PNG, GIF)",
+        }));
+        // Clear selected file
+        setReceipt(null);
+        return; // Stop here, don't proceed
+      }
+
+      // VALIDATION 2: Check file size
+      // file.size is in bytes
+      // 5MB = 5 * 1024 KB = 5 * 1024 * 1024 bytes = 5,242,880 bytes
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      if (file.size > MAX_SIZE) {
+        setErrors((prev) => ({
+          ...prev,
+          receipt: "File size must be less than 5MB",
+        }));
+        setReceipt(null);
+        return;
+      }
+
+      // File is valid! Store it in state
+      setReceipt(file);
+
+      // Clear any previous errors
+      setErrors((prev) => ({ ...prev, receipt: undefined }));
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     // Validate before submitting
     const validationErrors = validateForm(formData);
+
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return; // stop submission
@@ -89,25 +168,20 @@ function ExpenseForm() {
     // Parse amount safely
     const amount = parseFloat(formData.amount);
 
-    // Submit processed data
-    // onSubmit({
-    //   description: formData.description.trim(),
-    //   amount,
-    //   category: formData.category,
-    //   date: formData.date,
-    // });
     processData();
-    // Reset form + errors
+
+    //Reset all form information, receipt info, and errors
     setFormData({
       description: "",
       amount: "",
       category: "Food",
       date: new Date().toISOString().split("T")[0],
     });
+    setReceipt(null);
     setErrors({});
 
     router.push("/Expenses");
-  };
+  }
 
   return (
     <form
@@ -263,18 +337,101 @@ function ExpenseForm() {
           <span className="text-red-500 text-xs mt-1 block">{errors.date}</span>
         )}
       </div>
+      <div className="mb-6">
+        <label
+          htmlFor="receipt-input"
+          className="block text-sm font-medium text-gray-700 mb-1.5"
+        >
+          Receipt (Optional)
+        </label>
+        <div
+          className={`w-full rounded-lg p-3 transition-colors duration-150 ${
+            uploading
+              ? "bg-gray-50 border border-gray-200 opacity-60 cursor-not-allowed"
+              : "bg-white border-2 border-dashed border-gray-200 hover:border-gray-300"
+          }`}
+        >
+          <input
+            id="receipt-input"
+            type="file"
+            accept="image/*"
+            onChange={handleReceiptChange}
+            disabled={uploading}
+            className="sr-only"
+          />
+          <label
+            htmlFor="receipt-input"
+            className={`flex items-center gap-3 cursor-pointer select-none ${
+              uploading ? "pointer-events-none" : ""
+            }`}
+          >
+            <span className="flex items-center justify-center w-10 h-10 rounded-md bg-gray-100">
+              <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-5 h-5 text-gray-500"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          aria-hidden="true"
+              >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M7 16v-4a4 4 0 018 0v4m-5-4v6m0 0h4" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M20 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6" />
+              </svg>
+            </span>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700 truncate">
+            {receipt ? receipt.name : "Click to upload a receipt"}
+          </span>
+          {receipt && (
+            <span className="text-xs text-gray-500 ml-2">
+              {(receipt.size / 1024).toFixed(0)} KB
+            </span>
+          )}
+              </div>
+              {!receipt && (
+          <p className="text-xs text-gray-500 mt-0.5">
+            PNG, JPG, GIF up to 5MB
+          </p>
+              )}
+            </div>
+
+            <span
+              aria-hidden
+              className={`ml-3 inline-flex items-center px-3 py-1 rounded-md text-xs font-medium ${
+          uploading ? "bg-gray-200 text-gray-500" : "bg-blue-500 text-white hover:bg-blue-600"
+              }`}
+            >
+              Browse
+            </span>
+          </label>
+        </div>
+        {receipt && (
+          <p className="mt-2 text-sm text-gray-600">
+            Selected: <span className="font-medium">{receipt.name}</span> (
+            {(receipt.size / 1024).toFixed(2)} KB)
+          </p>
+        )}
+        {errors.receipt && (
+          <span className="text-red-500 text-xs mt-1 block">
+            {errors.receipt}
+          </span>
+        )}
+        <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+      </div>
 
       <button
         type="submit"
-        className="
-        w-full bg-blue-500 hover:bg-blue-600 
-        text-white font-medium py-3 px-4 
-        rounded-md transition-colors duration-200
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-        disabled:opacity-50 disabled:cursor-not-allowed
-      "
+        disabled={uploading}
+        className={`w-full py-3 px-4 rounded-md font-medium ${
+          uploading
+            ? "bg-gray-300 cursor-not-allowed"
+            : "bg-blue-500 hover:bg-blue-600 text-white"
+        }`}
       >
-        Add Expense
+        {uploading ? "Uploading Receipt..." : "Add Expense"}
       </button>
     </form>
   );

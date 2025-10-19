@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       amount: body.amount,
       category: body.category,
       date: body.date,
+      receiptUrl: body.receiptUrl,
     };
 
     expenses.push(newExpense);
