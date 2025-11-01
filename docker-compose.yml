@@ -1,13 +1,32 @@
-version: "3.8"
-
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack-pro
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3
+      - SERVICES=s3,cognito-idp, dynamodb
       - DEBUG=1
     volumes:
       - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/lib/docker.sock"
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: expensetracker
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist data even when container restarts
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      # Check if PostgreSQL is ready to accept connections
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Define named volume for PostgreSQL data persistence
+volumes:
+  postgres-data:
