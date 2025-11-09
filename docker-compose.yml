@@ -4,9 +4,9 @@ services:
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3,cognito-idp, dynamodb
+      - SERVICES=s3, cognito-idp, dynamodb
       - DEBUG=1
-    volumes:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
       - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/lib/docker.sock"
   postgres:
