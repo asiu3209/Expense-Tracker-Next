@@ -30,7 +30,7 @@ export default function RootLayout({
               <Link href="/Expenses" className="text-xl hover:underline">
                 Expenses
               </Link>
-              <Link href="/" className="text-xl hover:underline">
+              <Link href="/SignUp" className="text-xl hover:underline">
                 Login
               </Link>
             </div>
