@@ -1,79 +1,96 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { expenses } from "@/lib/db/schema";
+import { eq, desc } from "drizzle-orm";
+import { authenticateRequest } from "@/lib/auth-middleware";
 
-//Current Storage of expense information, database will be implemented
-let expenses = [
-  {
-    id: "1",
-    description: "Lunch at downtown cafe",
-    amount: 12.5,
-    category: "Food",
-    date: "2024-01-15",
-  },
-  {
-    id: "2",
-    description: "Monthly bus pass",
-    amount: 95.0,
-    category: "Transportation",
-    date: "2024-01-14",
-  },
-];
+// GET /api/expenses
+// Fetch all expenses for the authenticated user
+export async function GET(request: NextRequest) {
+  // Step 1: Authenticate and get userId from token
+  const authResult = await authenticateRequest(request);
+  if (!authResult.authenticated) {
+    return authResult.error;
+  }
 
-//Returns the expenses array to whoever asked for it in JSON form
-export async function GET() {
-  return NextResponse.json(expenses);
-}
+  // Step 2: Extract userId from verified token (TRUSTED source)
+  const { userId } = authResult;
 
-//Adds a new expense into the array, returns error codes when problems occur
-export async function POST(request: Request) {
   try {
-    //Obtains information, such as expense info, from called function
-    const body = await request.json();
-    // Validate required fields
-    if (!body.description || !body.amount || !body.category || !body.date) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
-    }
-    //New expense created using form data
-    const newExpense = {
-      id: Date.now().toString(),
-      description: body.description,
-      amount: body.amount,
-      category: body.category,
-      date: body.date,
-      receiptUrl: body.receiptUrl,
-    };
+    // Step 3: Query database - CRITICAL: Filter by userId
+    // This WHERE clause prevents users from seeing each other's data
+    const userExpenses = await db
+      .select()
+      .from(expenses)
+      .where(eq(expenses.userId, userId)) // Only this user's expenses
+      .orderBy(desc(expenses.date)); // Newest first
 
-    expenses.push(newExpense);
-    //Returns success code
-    return NextResponse.json(newExpense, { status: 201 });
+    // Step 4: Return the expenses
+    return NextResponse.json({
+      expenses: userExpenses,
+      count: userExpenses.length,
+    });
   } catch (error) {
-    //Handles errors
+    console.error("Error fetching expenses:", error);
     return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 }
+      { error: "Failed to fetch expenses" },
+      { status: 500 }
     );
   }
 }
-//Deletes a provided expense from storage based off of an expense ID given
-export async function DELETE(request: Request) {
-  try {
-    const { id } = await request.json();
 
-    // If no ID provided
-    if (!id) {
+// POST /api/expenses
+// Create a new expense for the authenticated user
+export async function POST(request: NextRequest) {
+  // Step 1: Authenticate and get userId from token
+  const authResult = await authenticateRequest(request);
+  if (!authResult.authenticated) {
+    return authResult.error;
+  }
+
+  // Step 2: Extract userId from verified token
+  const { userId } = authResult;
+
+  try {
+    // Step 3: Get expense data from request body
+    const body = await request.json();
+    const { amount, category, description, date, receiptUrl } = body;
+
+    // Step 4: Validate required fields
+    if (!amount || !category || !date) {
       return NextResponse.json(
-        { error: "Missing expense ID" },
+        { error: "Amount, category, and date are required" },
         { status: 400 }
       );
     }
 
-    // Filter out the expense with the given ID
-    expenses = expenses.filter((expense) => expense.id !== id);
+    // Step 5: Insert expense into database
+    // SECURITY: Use userId from token, NOT from request body
+    const newExpense = await db
+      .insert(expenses)
+      .values({
+        userId, // From token - prevents creating expenses for other users
+        amount: amount.toString(),
+        category,
+        description: description || null,
+        date: new Date(date),
+        receiptUrl: receiptUrl || null,
+      })
+      .returning(); // Return the inserted row
 
-    return NextResponse.json({ message: "Expense deleted successfully" });
+    // Step 6: Return the created expense
+    return NextResponse.json(
+      {
+        message: "Expense created successfully",
+        expense: newExpense[0],
+      },
+      { status: 201 }
+    );
   } catch (error) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    console.error("Error creating expense:", error);
+    return NextResponse.json(
+      { error: "Failed to create expense" },
+      { status: 500 }
+    );
   }
 }

@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         message: "User created successfully",
-        userId: user.data.user_id,
-        email: user.data.email,
+        userId: (user as any).user_id ?? (user as any).userId,
+        email: (user as any).email,
       },
       { status: 201 }
     ); // 201 = Created
