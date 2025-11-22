@@ -27,11 +27,11 @@
 
 ## Phase 4: Advanced Features (Weeks 10-12)
 
-- [ ] DynamoDB for analytics data
-- [ ] Advanced reporting and charts
+- [IP] DynamoDB for analytics data
+- [IP] Advanced reporting and charts
 - [ ] Export functionality
 - [ ] Performance optimization
-- [ ] AWS deployment
+- [IP] AWS deployment
 
 ## Phase 5: Production & Polish (Week 13)
 
