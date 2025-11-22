@@ -1,42 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ManagementClient } from "auth0";
 
-// Initialize Auth0 Management Client
-// This client allows us to create and manage users in Auth0
-const management = new ManagementClient({
-  domain: process.env.AUTH0_DOMAIN!,
-  clientId: process.env.AUTH0_CLIENT_ID!,
-  clientSecret: process.env.AUTH0_CLIENT_SECRET!,
-});
-
-// POST /api/auth/signup
-// Creates a new user account in Auth0
 export async function POST(request: NextRequest) {
   try {
-    // Step 1: Get email and password from request body
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password, name } = await request.json();
 
-    // Step 2: Validate required fields
+    // Validate input
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
-        { status: 400 } // 400 = Bad Request
-      );
-    }
-
-    // Step 3: Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
         { status: 400 }
       );
     }
 
-    // Step 4: Validate password requirements
-    // Auth0 requires: minimum 8 characters
-    // We're adding: at least one uppercase, one lowercase, one number
+    // Password validation (Auth0 requires strong passwords)
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters" },
@@ -44,69 +20,76 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!/[A-Z]/.test(password)) {
+    // Check environment variables
+    const domain = process.env.AUTH0_DOMAIN;
+    const clientId = process.env.AUTH0_CLIENT_ID;
+
+    if (!domain || !clientId) {
+      console.error("Missing AUTH0_DOMAIN or AUTH0_CLIENT_ID");
       return NextResponse.json(
-        { error: "Password must contain at least one uppercase letter" },
-        { status: 400 }
+        { error: "Server configuration error" },
+        { status: 500 }
       );
     }
 
-    if (!/[a-z]/.test(password)) {
-      return NextResponse.json(
-        { error: "Password must contain at least one lowercase letter" },
-        { status: 400 }
-      );
-    }
+    // Use Auth0's public signup endpoint (no Management API needed!)
+    // This is the Database Connections signup endpoint
+    const signupUrl = `https://${domain}/dbconnections/signup`;
 
-    if (!/[0-9]/.test(password)) {
-      return NextResponse.json(
-        { error: "Password must contain at least one number" },
-        { status: 400 }
-      );
-    }
-
-    // Step 5: Create user in Auth0
-    const user = await management.users.create({
-      email,
-      password,
-      connection: "Username-Password-Authentication", // Auth0's default database connection
-      email_verified: true, // Skip email verification for development
-      // In production, set to false and implement email verification
+    const response = await fetch(signupUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        connection: "Username-Password-Authentication", // Default Auth0 database connection
+        email: email,
+        password: password,
+        name: name || email.split("@")[0],
+      }),
     });
 
-    // Step 6: Return success response
-    return NextResponse.json(
-      {
-        message: "User created successfully",
-        userId: (user as any).user_id ?? (user as any).userId,
-        email: (user as any).email,
-      },
-      { status: 201 }
-    ); // 201 = Created
-  } catch (error: any) {
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Auth0 signup error:", data);
+
+      // Handle specific Auth0 errors
+      if (data.code === "invalid_password") {
+        return NextResponse.json(
+          {
+            error:
+              "Password is too weak. Include uppercase, lowercase, numbers, and special characters.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (data.code === "user_exists") {
+        return NextResponse.json(
+          { error: "An account with this email already exists." },
+          { status: 409 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: data.description || data.message || "Sign-up failed" },
+        { status: response.status }
+      );
+    }
+
+    // Success!
+    return NextResponse.json({
+      success: true,
+      message: "Account created successfully. Please sign in.",
+      userId: data._id,
+    });
+  } catch (error) {
     console.error("Sign-up error:", error);
-
-    // Handle specific Auth0 errors
-    if (error.statusCode === 409) {
-      // 409 = Conflict (user already exists)
-      return NextResponse.json(
-        { error: "An account with this email already exists" },
-        { status: 409 }
-      );
-    }
-
-    if (error.statusCode === 400) {
-      // 400 = Bad Request (Auth0 validation failed)
-      return NextResponse.json(
-        { error: error.message || "Invalid user data" },
-        { status: 400 }
-      );
-    }
-
-    // Generic error for unexpected issues
     return NextResponse.json(
       { error: "Sign-up failed. Please try again." },
-      { status: 500 } // 500 = Internal Server Error
+      { status: 500 }
     );
   }
 }

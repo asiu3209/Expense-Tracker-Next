@@ -1,101 +1,100 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
-// POST /api/auth/signin
-// Validates credentials and returns JWT tokens from Auth0
 export async function POST(request: NextRequest) {
   try {
-    // Step 1: Get email and password from request body
-    const body = await request.json();
-    const { email, password } = body;
+    const { email, password } = await request.json();
 
-    // Step 2: Validate required fields
+    // Validate input
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: "Email and password are required" },
         { status: 400 }
       );
     }
 
-    // Step 3: Call Auth0 OAuth Token endpoint
-    // This is the standard OAuth 2.0 "Resource Owner Password" flow
-    const tokenResponse = await fetch(
-      `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          grant_type: 'password', // OAuth grant type for username/password
-          username: email,
-          password: password,
-          client_id: process.env.AUTH0_CLIENT_ID,
-          client_secret: process.env.AUTH0_CLIENT_SECRET,
-          audience: process.env.AUTH0_AUDIENCE,
-          scope: 'openid profile email', // Request user info in tokens
-        }),
-      }
-    );
+    // Check environment variables
+    const domain = process.env.AUTH0_DOMAIN;
+    const clientId = process.env.AUTH0_CLIENT_ID;
+    const clientSecret = process.env.AUTH0_CLIENT_SECRET;
+    const audience = process.env.AUTH0_AUDIENCE;
+    const jwtSecret = process.env.JWT_SECRET;
 
-    // Step 4: Check if authentication succeeded
-    if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      
-      // Auth0 returns specific error codes we can translate to user-friendly messages
-      if (errorData.error === 'invalid_grant') {
-        return NextResponse.json(
-          { error: 'Invalid email or password' },
-          { status: 401 } // 401 = Unauthorized
-        );
-      }
-
-      if (errorData.error === 'access_denied') {
-        return NextResponse.json(
-          { error: 'Account is locked or disabled' },
-          { status: 403 } // 403 = Forbidden
-        );
-      }
-
-      // Generic authentication failure
+    if (!domain || !clientId || !clientSecret || !audience || !jwtSecret) {
+      console.error("Missing required environment variables");
       return NextResponse.json(
-        { error: 'Authentication failed' },
-        { status: 401 }
+        { error: "Server configuration error" },
+        { status: 500 }
       );
     }
 
-    // Step 5: Extract tokens from Auth0 response
-    const tokens = await tokenResponse.json();
+    // Use Auth0's token endpoint with Resource Owner Password Grant
+    const tokenUrl = `https://${domain}/oauth/token`;
 
-    // Step 6: Get user information from Auth0
-    const userInfoResponse = await fetch(
-      `https://${process.env.AUTH0_DOMAIN}/userinfo`,
-      {
-        headers: {
-          Authorization: `Bearer ${tokens.access_token}`,
-        },
-      }
-    );
-
-    const userInfo = await userInfoResponse.json();
-
-    // Step 7: Return tokens and user info to frontend
-    return NextResponse.json({
-      accessToken: tokens.access_token,
-      idToken: tokens.id_token,
-      expiresIn: tokens.expires_in, // How long until token expires (seconds)
-      user: {
-        id: userInfo.sub, // "sub" is the standard JWT claim for user ID
-        email: userInfo.email,
-        emailVerified: userInfo.email_verified,
+    const response = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        grant_type: "password",
+        username: email,
+        password: password,
+        client_id: clientId,
+        client_secret: clientSecret,
+        audience: audience,
+        scope: "openid profile email",
+      }),
     });
 
-  } catch (error: any) {
-    console.error('Sign-in error:', error);
+    const data = await response.json();
 
-    // Network or unexpected errors
+    if (!response.ok) {
+      console.error("Auth0 token error:", data);
+
+      // Handle specific errors
+      if (data.error === "invalid_grant") {
+        return NextResponse.json(
+          { error: "Invalid email or password" },
+          { status: 401 }
+        );
+      }
+
+      return NextResponse.json(
+        { error: data.error_description || "Authentication failed" },
+        { status: response.status }
+      );
+    }
+
+    // Decode the ID token to get user info
+    const idToken = data.id_token;
+    const decoded = jwt.decode(idToken) as any;
+
+    // Create our own JWT for the app
+    const appToken = jwt.sign(
+      {
+        userId: decoded.sub,
+        email: decoded.email,
+        name: decoded.name || decoded.email?.split("@")[0],
+      },
+      jwtSecret,
+      { expiresIn: "7d" }
+    );
+
+    // Return tokens
+    return NextResponse.json({
+      success: true,
+      token: appToken,
+      user: {
+        id: decoded.sub,
+        email: decoded.email,
+        name: decoded.name || decoded.email?.split("@")[0],
+      },
+    });
+  } catch (error) {
+    console.error("Sign-in error:", error);
     return NextResponse.json(
-      { error: 'Sign-in failed. Please try again.' },
+      { error: "Authentication failed" },
       { status: 500 }
     );
   }

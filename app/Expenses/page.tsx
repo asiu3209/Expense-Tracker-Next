@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import ExpenseSummary from "@/components/ExpenseSummary/ExpenseSummary";
 import ExpenseList from "@/components/ExpenseList/ExpenseList";
 import type { ExpenseCategory } from "@/components/ExpenseCard/ExpenseCard";
-import Login from "@/components/Login/Login";
-import SignUp from "@/components/SignUp/SignUp";
 import Link from "next/link";
 
 // Type for expense data
@@ -56,10 +54,10 @@ function App() {
     fetchExpenses();
   }
   //Obtains the sum of all expenses to be displayed inside expense summary
-  const totalAmount = expenses.reduce(
-    (sum: number, expense: Expense) => sum + expense.amount,
-    0
-  );
+  let totalAmount = 0;
+  expenses.forEach((expense: Expense) => {
+    totalAmount += expense.amount;
+  });
 
   return (
     <div className="flex flex-col justify-center items-center min-h-screen w-full bg-slate-50">
