@@ -3,31 +3,26 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SignUpPage() {
-  // Router for navigation after successful sign-up
+export default function SignInPage() {
   const router = useRouter();
 
-  // Form state - stores user input
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // UI state - manages loading and error messages
+  // UI state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   // Handle form submission
-  async function handleSignUp(e: React.FormEvent) {
-    // Prevent default form submission (page reload)
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
-
-    // Clear any previous errors
     setError("");
     setLoading(true);
 
     try {
-      // Call our sign-up API route
-      const response = await fetch("/api/auth/signup", {
+      // Call our sign-in API route
+      const response = await fetch("/api/auth/signin", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -37,24 +32,22 @@ export default function SignUpPage() {
 
       const data = await response.json();
 
-      // Check if sign-up was successful
       if (!response.ok) {
-        // API returned an error (400, 409, 500, etc.)
-        setError(data.error || "Sign-up failed. Please try again.");
+        setError(data.error || "Sign-in failed. Please try again.");
         setLoading(false);
         return;
       }
 
-      // Success! Show success message
-      setSuccess(true);
+      // Success! Save tokens to localStorage
+      // In a production app, you'd use httpOnly cookies for better security
+      // But localStorage is simpler for learning
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("idToken", data.idToken);
 
-      // After 2 seconds, redirect to sign-in page
-      setTimeout(() => {
-        router.push("/signin");
-      }, 2000);
+      // Redirect to home page (or dashboard)
+      router.push("/");
     } catch (err) {
-      // Network error or something else went wrong
-      console.error("Sign-up error:", err);
+      console.error("Sign-in error:", err);
       setError("Network error. Please check your connection and try again.");
       setLoading(false);
     }
@@ -64,14 +57,7 @@ export default function SignUpPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         {/* Page Title */}
-        <h1 className="text-2xl font-bold text-center mb-6">Create Account</h1>
-
-        {/* Success Message */}
-        {success && (
-          <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-            Account created successfully! Redirecting to sign in...
-          </div>
-        )}
+        <h1 className="text-2xl font-bold text-center mb-6">Sign In</h1>
 
         {/* Error Message */}
         {error && (
@@ -80,8 +66,8 @@ export default function SignUpPage() {
           </div>
         )}
 
-        {/* Sign-Up Form */}
-        <form onSubmit={handleSignUp} className="space-y-4">
+        {/* Sign-In Form */}
+        <form onSubmit={handleSignIn} className="space-y-4">
           {/* Email Input */}
           <div>
             <label
@@ -98,7 +84,7 @@ export default function SignUpPage() {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="your.email@example.com"
-              disabled={loading || success}
+              disabled={loading}
             />
           </div>
 
@@ -117,29 +103,26 @@ export default function SignUpPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Minimum 8 characters"
-              disabled={loading || success}
+              placeholder="Enter your password"
+              disabled={loading}
             />
-            <p className="mt-1 text-xs text-gray-500">
-              Must include uppercase, lowercase, and numbers
-            </p>
           </div>
 
           {/* Submit Button */}
           <button
             type="submit"
-            disabled={loading || success}
+            disabled={loading}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {loading ? "Creating Account..." : "Sign Up"}
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
-        {/* Link to Sign In */}
+        {/* Link to Sign Up */}
         <p className="mt-4 text-center text-sm text-gray-600">
-          Already have an account?{" "}
-          <a href="/signin" className="text-blue-600 hover:underline">
-            Sign In
+          Don't have an account?{" "}
+          <a href="/signup" className="text-blue-600 hover:underline">
+            Sign Up
           </a>
         </p>
       </div>

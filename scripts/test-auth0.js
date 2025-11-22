@@ -18,7 +18,7 @@ async function testConnection() {
       client_id: process.env.AUTH0_CLIENT_ID,
     });
     console.log("Auth0 credentials valid");
-    console.log(`Application: ${client.data.name}`);
+    console.log(`Application: ${client.name}`);
 
     // Test 2: Verify Management API access
     console.log("\n Testing Management API permissions...");
@@ -26,14 +26,14 @@ async function testConnection() {
     console.log("Management API access granted");
     console.log(
       `Current users in tenant: ${
-        users.data.length === 0 ? "None yet" : users.data.length
+        users.length === 0 ? "None yet" : users.length
       }`
     );
 
     console.log("\n Auth0 setup complete! You can create users.");
     process.exit(0);
   } catch (error) {
-    console.error("❌ Auth0 test failed:");
+    console.error("Auth0 test failed:");
     console.error(error.message);
 
     if (error.message.includes("Insufficient scope")) {
