@@ -60,8 +60,32 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (data.error === "unauthorized_client") {
+        return NextResponse.json(
+          {
+            error:
+              "Password grant not enabled. Check Auth0 Settings → Grant Types",
+            details: data.error_description,
+          },
+          { status: 401 }
+        );
+      }
+
+      if (data.error === "access_denied") {
+        return NextResponse.json(
+          {
+            error: "Access denied. Check Auth0 Settings → Default Directory",
+            details: data.error_description,
+          },
+          { status: 401 }
+        );
+      }
+
       return NextResponse.json(
-        { error: data.error_description || "Authentication failed" },
+        {
+          error: data.error_description || "Authentication failed",
+          errorCode: data.error,
+        },
         { status: response.status }
       );
     }

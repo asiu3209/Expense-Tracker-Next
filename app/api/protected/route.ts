@@ -1,29 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticateRequest } from "@/lib/auth-middleware";
 
-// GET /api/protected
-// This route requires authentication - tests our middleware
 export async function GET(request: NextRequest) {
-  // Step 1: Authenticate the request FIRST
-  // This validates the token and extracts the userId
+  // Step 1: Authenticate the request
   const authResult = await authenticateRequest(request);
 
-  // If authentication failed, return the error response
-  if (!authResult.authenticated) {
-    return authResult.error;
+  // Step 2: Check if authentication failed
+  if (authResult instanceof NextResponse) {
+    // authenticateRequest returned an error response
+    return authResult;
   }
 
-  // Authentication succeeded! Extract the userId
-  // THIS IS CRITICAL: We now have a TRUSTED userId from the verified token
-  // We did NOT accept this from the client - we extracted it from the cryptographic signature
-  const { userId, email } = authResult;
+  // Step 3: Authentication succeeded - use the authenticated user data
+  const { userId, email, name } = authResult;
 
-  // Step 2: Use the authenticated user information
+  // Step 4: Return protected data
   return NextResponse.json({
-    message: "You are authenticated!",
+    message: "This is protected data",
     user: {
-      id: userId,
-      email: email,
+      userId,
+      email,
+      name,
     },
   });
 }

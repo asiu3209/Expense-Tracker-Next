@@ -1,26 +1,22 @@
+// Load environment variables for scripts
+// (Next.js automatically loads .env.local, but scripts don't)
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "./schema";
-import dotenv from "dotenv";
 
-dotenv.config({ path: ".env.local" }); // 👈 loads your .env.local file
-// Check if DATABASE_URL is set
-// This prevents cryptic errors if environment variable is missing
+// Check for DATABASE_URL
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is not set");
+  throw new Error(
+    "DATABASE_URL is not set in environment variables. " +
+      "Make sure .env.local exists with DATABASE_URL=postgresql://postgres:postgres@localhost:5432/expensetracker"
+  );
 }
 
 // Create PostgreSQL connection
-// This connection is reused across all database queries
-const connectionString = process.env.DATABASE_URL;
+const queryClient = postgres(process.env.DATABASE_URL);
 
-// postgres() creates the connection pool
-// A pool maintains multiple database connections for performance
-const queryClient = postgres(connectionString);
-
-// drizzle() wraps the connection with ORM functionality
-// schema provides TypeScript types for your tables
+// Create Drizzle database instance
 export const db = drizzle(queryClient, { schema });
-
-// Export schema for use in queries
-export { schema };

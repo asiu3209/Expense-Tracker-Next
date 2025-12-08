@@ -1,47 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authenticateRequest } from "@/lib/auth-middleware";
 import { db } from "@/lib/db";
 import { expenses } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { authenticateRequest } from "@/lib/auth-middleware";
 
-// GET /api/expenses/[id]
-// Fetch a single expense (only if it belongs to authenticated user)
+// GET /api/expenses/[id] - Get single expense
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authResult = await authenticateRequest(request);
-  if (!authResult.authenticated) {
-    return authResult.error;
-  }
-
-  const { userId } = authResult;
-
   try {
-    // Query with TWO conditions (AND):
-    // 1. Expense ID matches the requested ID
-    // 2. Expense belongs to the authenticated user
+    // Step 1: Authenticate
+    const authResult = await authenticateRequest(request);
+    if (authResult instanceof NextResponse) return authResult;
+
+    const { userId } = authResult;
+    const expenseId = params.id;
+
+    // Step 2: Query with TWO conditions (id AND userId)
     const expense = await db
       .select()
       .from(expenses)
       .where(
         and(
-          eq(expenses.id, params.id),
-          eq(expenses.userId, userId) // CRITICAL: Verify ownership
+          eq(expenses.id, expenseId),
+          eq(expenses.userId, userId) // Security: only return if owned by user
         )
-      );
+      )
+      .limit(1);
 
-    // If no expense found, either:
-    // - The ID doesn't exist, OR
-    // - The expense belongs to a different user
-    // Either way, return 404 (don't reveal which)
+    // Step 3: Check if expense exists and belongs to user
     if (expense.length === 0) {
       return NextResponse.json({ error: "Expense not found" }, { status: 404 });
     }
 
-    return NextResponse.json(expense[0]);
+    return NextResponse.json({ expense: expense[0] });
   } catch (error) {
-    console.error("Error fetching expense:", error);
+    console.error("Get expense error:", error);
     return NextResponse.json(
       { error: "Failed to fetch expense" },
       { status: 500 }
@@ -49,51 +44,46 @@ export async function GET(
   }
 }
 
-// PUT /api/expenses/[id]
-// Update an expense (only if it belongs to authenticated user)
+// PUT /api/expenses/[id] - Update expense
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authResult = await authenticateRequest(request);
-  if (!authResult.authenticated) {
-    return authResult.error;
-  }
-
-  const { userId } = authResult;
-
   try {
+    // Step 1: Authenticate
+    const authResult = await authenticateRequest(request);
+    if (authResult instanceof NextResponse) return authResult;
+
+    const { userId } = authResult;
+    const expenseId = params.id;
+
+    // Step 2: Get update data from request body
     const body = await request.json();
     const { amount, category, description, date, receiptUrl } = body;
 
-    // SECURITY: Update with TWO conditions
-    // This prevents updating expenses that belong to other users
+    // Step 3: Update with TWO conditions (id AND userId)
     const updated = await db
       .update(expenses)
       .set({
-        amount: amount?.toString(),
-        category,
-        description,
-        date: date ? new Date(date) : undefined,
-        receiptUrl,
-        updatedAt: new Date(), // Track when the expense was last modified
+        ...(amount && { amount: amount.toString() }),
+        ...(category && { category }),
+        ...(description !== undefined && { description }),
+        ...(date && { date: new Date(date) }),
+        ...(receiptUrl !== undefined && { receiptUrl }),
+        updatedAt: new Date(),
       })
       .where(
         and(
-          eq(expenses.id, params.id),
-          eq(expenses.userId, userId) // CRITICAL: Only update if user owns it
+          eq(expenses.id, expenseId),
+          eq(expenses.userId, userId) // Security: only update if owned by user
         )
       )
       .returning();
 
-    // If nothing was updated, the expense either:
-    // - Doesn't exist, OR
-    // - Belongs to a different user
+    // Step 4: Check if expense was found and updated
     if (updated.length === 0) {
       return NextResponse.json(
-        {
-          error: "Expense not found or you do not have permission to update it",
-        },
+        { error: "Expense not found or unauthorized" },
         { status: 404 }
       );
     }
@@ -103,7 +93,7 @@ export async function PUT(
       expense: updated[0],
     });
   } catch (error) {
-    console.error("Error updating expense:", error);
+    console.error("Update expense error:", error);
     return NextResponse.json(
       { error: "Failed to update expense" },
       { status: 500 }
@@ -111,37 +101,34 @@ export async function PUT(
   }
 }
 
-// DELETE /api/expenses/[id]
-// Delete an expense (only if it belongs to authenticated user)
+// DELETE /api/expenses/[id] - Delete expense
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authResult = await authenticateRequest(request);
-  if (!authResult.authenticated) {
-    return authResult.error;
-  }
-
-  const { userId } = authResult;
-
   try {
-    // SECURITY: Delete with TWO conditions
-    // This prevents deleting expenses that belong to other users
+    // Step 1: Authenticate
+    const authResult = await authenticateRequest(request);
+    if (authResult instanceof NextResponse) return authResult;
+
+    const { userId } = authResult;
+    const expenseId = params.id;
+
+    // Step 2: Delete with TWO conditions (id AND userId)
     const deleted = await db
       .delete(expenses)
       .where(
         and(
-          eq(expenses.id, params.id),
-          eq(expenses.userId, userId) // CRITICAL: Only delete if user owns it
+          eq(expenses.id, expenseId),
+          eq(expenses.userId, userId) // Security: only delete if owned by user
         )
       )
       .returning();
 
+    // Step 3: Check if expense was found and deleted
     if (deleted.length === 0) {
       return NextResponse.json(
-        {
-          error: "Expense not found or you do not have permission to delete it",
-        },
+        { error: "Expense not found or unauthorized" },
         { status: 404 }
       );
     }
@@ -151,7 +138,7 @@ export async function DELETE(
       expense: deleted[0],
     });
   } catch (error) {
-    console.error("Error deleting expense:", error);
+    console.error("Delete expense error:", error);
     return NextResponse.json(
       { error: "Failed to delete expense" },
       { status: 500 }

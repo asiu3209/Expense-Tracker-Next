@@ -16,20 +16,36 @@ export function getAccessToken(): string | null {
   return localStorage.getItem("accessToken");
 }
 
-// Get the current ID token
-export function getIdToken(): string | null {
+// Get user information from localStorage
+export function getUserInfo(): {
+  id: string;
+  email: string;
+  name: string;
+} | null {
   if (typeof window === "undefined") return null;
 
-  return localStorage.getItem("idToken");
+  const userInfo = localStorage.getItem("userInfo");
+  return userInfo ? JSON.parse(userInfo) : null;
 }
 
-// Sign out - remove all tokens
+// Save authentication data after successful sign-in
+export function saveAuthData(
+  token: string,
+  user: { id: string; email: string; name: string }
+): void {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem("accessToken", token);
+  localStorage.setItem("userInfo", JSON.stringify(user));
+}
+
+// Sign out - remove all tokens and redirect
 export function signOut(): void {
   if (typeof window === "undefined") return;
 
   // Remove all authentication tokens
   localStorage.removeItem("accessToken");
-  localStorage.removeItem("idToken");
+  localStorage.removeItem("userInfo");
 
   // Redirect to sign-in page
   window.location.href = "/signin";
@@ -44,10 +60,10 @@ export async function authenticatedFetch(
   const token = getAccessToken();
 
   if (!token) {
-    throw new Error("No access token available");
+    throw new Error("No authentication token available");
   }
 
-  // Add Authorization header to the request
+  // Merge authorization header with any existing headers
   const headers = {
     ...options.headers,
     Authorization: `Bearer ${token}`,

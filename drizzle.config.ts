@@ -11,7 +11,7 @@ export default {
 
   // Output directory for migration files
   // Migrations are SQL files that create/modify database tables
-  out: "./lib/db/migrations",
+  out: "./drizzle",
 
   // Database driver (PostgreSQL)
   //Instead of driver, new update replaces it with dialect
@@ -22,10 +22,4 @@ export default {
   dbCredentials: {
     url: process.env.DATABASE_URL!,
   },
-
-  // Print SQL statements during migrations (helpful for learning)
-  verbose: true,
-
-  // Ask for confirmation before running destructive migrations
-  strict: true,
 } satisfies Config;

@@ -73,6 +73,13 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (data.code === "invalid_signup") {
+        return NextResponse.json(
+          { error: "Invalid sign up. Check password strength requirements." },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
         { error: data.description || data.message || "Sign-up failed" },
         { status: response.status }

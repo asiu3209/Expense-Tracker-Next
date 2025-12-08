@@ -1,14 +1,14 @@
 services:
   localstack:
-    image: localstack/localstack-pro
+    image: localstack/localstack:latest
     ports:
       - "4566:4566"
     environment:
-      - SERVICES=s3, cognito-idp, dynamodb
+      - SERVICES=s3
       - DEBUG=1
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+    volumes:
       - "./localstack-data:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/lib/docker.sock"
+      - "/var/run/docker.sock:/var/run/docker.sock"
   postgres:
     image: postgres:15-alpine
     environment:

@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 
 // Paste your token here (from the sign-in response)
 const token =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhdXRoMHw2OTIyMWM5MzhjZTRmOTIxMjFlMjU4YTUiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJuYW1lIjoiVGVzdCBVc2VyIiwiaWF0IjoxNzYzODQzNTg0LCJleHAiOjE3NjQ0NDgzODR9.Sh7O_Om00aOJBalfk8hQWC90Q6cEoXt7JVIFBcPpAAU";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhdXRoMHw2OTM1ZGI5ZjkwYTA5OGU0YjZiZDJiYmUiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJuYW1lIjoiVGVzdCBVc2VyIiwiaWF0IjoxNzY1MTM3MzE5LCJleHAiOjE3NjU3NDIxMTl9.u7Sk0_tPVppfK2Dh5WJE_qY5iERfK72u9g7I1u6Qwms";
 
 // Decode without verification (just to see contents)
 const decoded = jwt.decode(token, { complete: true });
